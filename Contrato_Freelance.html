@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contrato de Servicios — Firma Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d10;
+    --page:#14171c;
+    --line:#262b32;
+    --ink:#e9e6df;
+    --muted:#8b93a1;
+    --gold:#c19a4b;
+    --gold-soft:rgba(193,154,75,0.14);
+    --danger:#c2564a;
+    --ok:#7fae82;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:40px 16px 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    background:var(--page);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:56px 52px;
+    position:relative;
+    overflow:hidden;
+  }
+  .page::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;
+    height:3px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:34px;
+    line-height:1.15;
+    margin:0 0 6px;
+    color:#fff;
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:14px;
+    margin-bottom:36px;
+  }
+  .meta-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 20px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    margin-bottom:40px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .field.full{grid-column:1 / -1;}
+  label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+  }
+  input, textarea{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--line);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    padding:6px 2px;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input:focus, textarea:focus{border-color:var(--gold);}
+  input::placeholder, textarea::placeholder{color:#4b5158;}
+
+  .clause{
+    margin-bottom:30px;
+    padding-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .clause:last-of-type{border-bottom:none;}
+  .clause h2{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 10px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .clause h2 span.n{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .clause p, .clause li{
+    font-size:14.5px;
+    line-height:1.65;
+    color:#cfd2d8;
+    margin:0 0 8px;
+  }
+  .clause ul{margin:8px 0; padding-left:20px;}
+  .clause textarea{
+    width:100%;
+    min-height:60px;
+    resize:vertical;
+    line-height:1.6;
+    font-size:14.5px;
+    border:1px dashed var(--line);
+    border-radius:6px;
+    padding:10px;
+    background:rgba(255,255,255,0.015);
+  }
+  .inline-input{
+    border:none;
+    border-bottom:1px solid var(--gold-soft);
+    color:var(--gold);
+    font-weight:500;
+    min-width:120px;
+    padding:0 2px;
+  }
+
+  .sign-section{
+    margin-top:44px;
+  }
+  .sign-title{
+    font-family:'Fraunces',serif;
+    font-size:20px;
+    color:#fff;
+    margin-bottom:4px;
+  }
+  .sign-sub{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:24px;
+  }
+  .signers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  @media(max-width:640px){
+    .signers{grid-template-columns:1fr;}
+    .meta-grid{grid-template-columns:1fr;}
+    .page{padding:36px 22px;}
+  }
+  .signer-box{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    background:rgba(255,255,255,0.015);
+  }
+  .signer-box .who{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  canvas.sigpad{
+    width:100%;
+    height:140px;
+    background:#0e1013;
+    border:1px dashed var(--line);
+    border-radius:6px;
+    touch-action:none;
+    cursor:crosshair;
+    display:block;
+  }
+  .sig-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+  }
+  .sig-name{
+    font-size:13px;
+    color:var(--ink);
+    font-weight:500;
+  }
+  .clear-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:12px;
+    cursor:pointer;
+    text-decoration:underline;
+  }
+  .clear-btn:hover{color:var(--danger);}
+  .stamp{
+    display:none;
+    align-items:center;
+    gap:6px;
+    margin-top:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ok);
+    letter-spacing:.03em;
+  }
+  .stamp.show{display:flex;}
+  .stamp .dot{
+    width:6px;height:6px;border-radius:50%;background:var(--ok);
+  }
+
+  .actions{
+    max-width:760px;
+    margin:26px auto 0;
+    display:flex;
+    gap:12px;
+    justify-content:flex-end;
+  }
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    padding:12px 22px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .btn.primary{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#161311;
+  }
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn:hover{border-color:var(--gold);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .note{
+    max-width:760px;
+    margin:14px auto 0;
+    font-size:12px;
+    color:var(--muted);
+    text-align:right;
+  }
+</style>
+</head>
+<body>
+
+<div class="page" id="contractPage">
+  <div class="eyebrow">Términos &amp; Condiciones</div>
+  <h1>Acuerdo de Prestación de Servicios</h1>
+  <div class="subtitle">Desarrollo Web · Automatizaciones · San Luis, Argentina</div>
+
+  <div class="meta-grid">
+    <div class="field">
+      <label>Cliente</label>
+      <input type="text" placeholder="Nombre / Razón social del cliente" id="clientName">
+    </div>
+    <div class="field">
+      <label>Freelancer</label>
+      <input type="text" placeholder="Tu nombre / Razón social" id="freelancerName">
+    </div>
+    <div class="field">
+      <label>Proyecto</label>
+      <input type="text" placeholder="Ej: Desarrollo Web + Automatizaciones" id="projectName">
+    </div>
+    <div class="field">
+      <label>Monto / Honorarios</label>
+      <input type="text" placeholder="Ej: $500.000 ARS" id="amount">
+    </div>
+    <div class="field">
+      <label>Inicia el</label>
+      <input type="date" id="startDate">
+    </div>
+    <div class="field">
+      <label>Concluye el (estimado)</label>
+      <input type="date" id="endDate">
+    </div>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">1.</span> Acuerdo</h2>
+    <p>Este acuerdo define los términos entre el desarrollador (en adelante, "el Freelancer") y el cliente (en adelante, "el Cliente") para la creación de una página web y/o la implementación de sistemas de automatización. El objetivo es garantizar entregables claros, tiempos definidos y una comunicación eficiente durante todo el proyecto.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">2.</span> Servicios a proporcionar</h2>
+    <ul>
+      <li>Desarrollo de página web profesional</li>
+      <li>Configuración de automatizaciones</li>
+      <li>Integración de APIs y herramientas</li>
+      <li>Configuración de base de datos</li>
+      <li>Optimización del sistema</li>
+    </ul>
+    <textarea placeholder="Agregá o ajustá detalles específicos del alcance para este cliente…"></textarea>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">3.</span> Entregables y plazos</h2>
+    <p>El Freelancer se compromete a entregar los avances según el cronograma acordado con el Cliente. Cualquier cambio de alcance que impacte en los plazos deberá ser acordado por escrito entre ambas partes antes de continuar el desarrollo.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">4.</span> Honorarios y forma de pago</h2>
+    <p>El Cliente abonará al Freelancer el monto acordado de <span class="inline-input" id="amountEcho">[monto]</span> según el siguiente esquema: 50% al inicio del proyecto como seña, y el 50% restante contra la entrega final. Los pagos se realizarán mediante transferencia bancaria u otro medio acordado entre las partes.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">5.</span> Revisiones</h2>
+    <p>El proyecto incluye hasta dos (2) rondas de revisiones sobre lo entregado. Cambios adicionales fuera del alcance original podrán cotizarse por separado.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">6.</span> Propiedad intelectual</h2>
+    <p>Los derechos sobre el desarrollo final se transfieren al Cliente una vez efectuado el pago total acordado. El Freelancer se reserva el derecho de exhibir el proyecto como parte de su portfolio, salvo acuerdo de confidencialidad expreso.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">7.</span> Confidencialidad</h2>
+    <p>Ambas partes se comprometen a mantener la confidencialidad de la información comercial, técnica o estratégica compartida durante el desarrollo del proyecto.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">8.</span> Cancelación</h2>
+    <p>En caso de cancelación del proyecto por parte del Cliente, la seña inicial no será reembolsable y se abonará de forma proporcional el trabajo ya realizado hasta el momento de la cancelación.</p>
+  </div>
+
+  <div class="clause">
+    <h2><span class="n">9.</span> Nada se mueve sin firma</h2>
+    <p>El desarrollo del proyecto comienza únicamente una vez que ambas partes hayan firmado este acuerdo. Esto protege tanto al Freelancer como al Cliente.</p>
+  </div>
+
+  <div class="sign-section">
+    <div class="sign-title">Firmas</div>
+    <div class="sign-sub">Dibujá tu firma con el mouse o el dedo en el recuadro correspondiente.</div>
+
+    <div class="signers">
+      <div class="signer-box">
+        <div class="who">Freelancer</div>
+        <canvas class="sigpad" id="sigFreelancer"></canvas>
+        <div class="sig-row">
+          <span class="sig-name" id="sigFreelancerName">—</span>
+          <button class="clear-btn" data-target="sigFreelancer">Limpiar</button>
+        </div>
+        <div class="stamp" id="stampFreelancer"><span class="dot"></span><span>Firmado</span></div>
+      </div>
+
+      <div class="signer-box">
+        <div class="who">Cliente</div>
+        <canvas class="sigpad" id="sigClient"></canvas>
+        <div class="sig-row">
+          <span class="sig-name" id="sigClientName">—</span>
+          <button class="clear-btn" data-target="sigClient">Limpiar</button>
+        </div>
+        <div class="stamp" id="stampClient"><span class="dot"></span><span>Firmado</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn" id="clearAllBtn">Limpiar todo</button>
+  <button class="btn primary" id="exportBtn">Generar PDF firmado</button>
+</div>
+<div class="note">El PDF se descarga directamente en tu dispositivo, no se envía a ningún servidor.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // ---- live echoes ----
+  const amountInput = document.getElementById('amount');
+  const amountEcho = document.getElementById('amountEcho');
+  amountInput.addEventListener('input', () => {
+    amountEcho.textContent = amountInput.value.trim() ? amountInput.value : '[monto]';
+  });
+
+  const freelancerNameInput = document.getElementById('freelancerName');
+  const clientNameInput = document.getElementById('clientName');
+  const sigFreelancerName = document.getElementById('sigFreelancerName');
+  const sigClientName = document.getElementById('sigClientName');
+  freelancerNameInput.addEventListener('input', () => {
+    sigFreelancerName.textContent = freelancerNameInput.value.trim() || '—';
+  });
+  clientNameInput.addEventListener('input', () => {
+    sigClientName.textContent = clientNameInput.value.trim() || '—';
+  });
+
+  // ---- signature pads ----
+  function setupPad(canvasId, stampId){
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let hasInk = false;
+    const stamp = document.getElementById(stampId);
+
+    function resize(){
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      ctx.scale(ratio, ratio);
+      ctx.strokeStyle = '#e9e6df';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+    resize();
+    window.addEventListener('resize', () => {
+      const data = hasInk ? canvas.toDataURL() : null;
+      resize();
+      if(data){
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+        img.src = data;
+      }
+    });
+
+    function pos(e){
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {x: clientX - rect.left, y: clientY - rect.top};
+    }
+    function start(e){
+      e.preventDefault();
+      drawing = true;
+      const p = pos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+    function move(e){
+      if(!drawing) return;
+      e.preventDefault();
+      const p = pos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      hasInk = true;
+    }
+    function end(){
+      if(drawing && hasInk){
+        stamp.classList.add('show');
+      }
+      drawing = false;
+    }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, {passive:false});
+    canvas.addEventListener('touchmove', move, {passive:false});
+    canvas.addEventListener('touchend', end);
+
+    return {
+      clear(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        hasInk = false;
+        stamp.classList.remove('show');
+      }
+    };
+  }
+
+  const padFreelancer = setupPad('sigFreelancer','stampFreelancer');
+  const padClient = setupPad('sigClient','stampClient');
+
+  document.querySelectorAll('.clear-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const target = btn.getAttribute('data-target');
+      if(target === 'sigFreelancer') padFreelancer.clear();
+      if(target === 'sigClient') padClient.clear();
+    });
+  });
+  document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+    padFreelancer.clear();
+    padClient.clear();
+  });
+
+  // ---- export to PDF ----
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('exportBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generando…';
+
+    const target = document.getElementById('contractPage');
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      backgroundColor: '#14171c',
+      useCORS: true
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    const clientSlug = (clientNameInput.value.trim() || 'cliente').replace(/\s+/g,'_');
+    pdf.save(`Contrato_${clientSlug}.pdf`);
+
+    btn.disabled = false;
+    btn.textContent = 'Generar PDF firmado';
+  });
+</script>
+
+</body>
+</html>
