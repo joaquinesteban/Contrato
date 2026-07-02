@@ -384,9 +384,9 @@
 
 <div class="actions">
   <button class="btn" id="clearAllBtn">Limpiar todo</button>
-  <button class="btn primary" id="exportBtn">Generar PDF firmado</button>
+  <button class="btn primary" id="downloadBtn">Descargar PDF</button>
 </div>
-<div class="note">El PDF se descarga directamente en tu dispositivo, no se envía a ningún servidor.</div>
+<div class="note" id="statusNote">El PDF se descarga directamente en tu dispositivo.</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -498,46 +498,79 @@
     padClient.clear();
   });
 
-  // ---- export to PDF ----
-  document.getElementById('exportBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('exportBtn');
-    btn.disabled = true;
-    btn.textContent = 'Generando…';
-
-    const target = document.getElementById('contractPage');
-    const canvas = await html2canvas(target, {
-      scale: 2,
-      backgroundColor: '#14171c',
-      useCORS: true
-    });
-
+  async function buildPdf(){
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p', 'pt', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const marginX = 36;   // margen izquierdo/derecho en pt
+    const marginTop = 36;
+    const marginBottom = 36;
+    const gap = 10;        // espacio entre bloques
+    const contentWidth = pageWidth - marginX * 2;
+    const PAGE_BG = '#14171c';
 
-    let heightLeft = imgHeight;
-    let position = 0;
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    function paintPageBackground(){
+      pdf.setFillColor(20, 23, 28);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
     }
 
+    paintPageBackground();
+    let cursorY = marginTop;
+
+    // Cada hijo directo de #contractPage se captura y se coloca como un
+    // bloque indivisible: si no entra en lo que queda de la hoja, arranca
+    // una hoja nueva, así nunca corta un párrafo o una firma a la mitad.
+    const page = document.getElementById('contractPage');
+    const blocks = Array.from(page.children);
+
+    for (const block of blocks) {
+      const canvas = await html2canvas(block, {
+        scale: 3,
+        backgroundColor: PAGE_BG,
+        useCORS: true
+      });
+
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/png');
+
+      // Si el bloque es más alto que una hoja entera, lo dejamos entrar
+      // igual (no hay forma de partirlo sin cortar contenido).
+      const fitsInFreshPage = imgHeight <= (pageHeight - marginTop - marginBottom);
+
+      if (cursorY + imgHeight > pageHeight - marginBottom && fitsInFreshPage) {
+        pdf.addPage();
+        paintPageBackground();
+        cursorY = marginTop;
+      }
+
+      pdf.addImage(imgData, 'PNG', marginX, cursorY, imgWidth, imgHeight);
+      cursorY += imgHeight + gap;
+    }
+
+    return pdf;
+  }
+
+  const statusNote = document.getElementById('statusNote');
+
+  // ---- Descargar PDF ----
+  document.getElementById('downloadBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('downloadBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generando…';
+    statusNote.textContent = 'Generando PDF…';
+    statusNote.style.color = 'var(--muted)';
+
+    const pdf = await buildPdf();
     const clientSlug = (clientNameInput.value.trim() || 'cliente').replace(/\s+/g,'_');
     pdf.save(`Contrato_${clientSlug}.pdf`);
 
+    statusNote.textContent = '✅ PDF descargado.';
+    statusNote.style.color = 'var(--ok)';
     btn.disabled = false;
-    btn.textContent = 'Generar PDF firmado';
+    btn.textContent = 'Descargar PDF';
   });
 </script>
 
